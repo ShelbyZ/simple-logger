@@ -70,6 +70,14 @@ The script includes error handling for common issues:
      ```
      Error: DURATION_MINUTES must be a positive integer
      ```
+   - If LOG_PADDING_SIZE is not a valid integer:
+     ```
+     Error: LOG_PADDING_SIZE must be a valid integer
+     ```
+   - If LOG_PADDING_SIZE is negative:
+     ```
+     Error: LOG_PADDING_SIZE must be a non-negative integer
+     ```
    - If LOGS_PER_MINUTE is not a valid integer:
      ```
      Error: LOGS_PER_MINUTE must be a valid integer
@@ -114,6 +122,7 @@ The script can be configured using the following environment variables:
 | `DURATION_MINUTES` | How long the logger should run (in minutes) | 20 |
 | `LOGS_PER_MINUTE` | Number of log entries to generate per minute | 2 |
 | `LOG_DIRECTORY` | Directory where log files will be stored | `/tmp/logs` |
+| `LOG_PADDING_SIZE` | Size of random data (in bytes) to append to each log message | 512 |
 | `ENABLE_JOURNALD` | Enable logging to systemd's journald (requires systemd-python, systemd-devel package) | `false` |
 | `SYSLOG_IDENTIFIER` | Identifier used for journald logs (used for filtering in journalctl) | `simple-logger` |
 
@@ -131,6 +140,16 @@ Store logs in a custom directory:
 LOG_DIRECTORY=./my_logs python simple-logger.py
 ```
 
+Set a custom padding size for log messages:
+```
+LOG_PADDING_SIZE=1024 python simple-logger.py
+```
+
+Disable random data padding:
+```
+LOG_PADDING_SIZE=0 python simple-logger.py
+```
+
 Enable journald logging:
 ```
 ENABLE_JOURNALD=true python simple-logger.py
@@ -143,7 +162,7 @@ ENABLE_JOURNALD=true SYSLOG_IDENTIFIER=my-application python simple-logger.py
 
 Run with multiple custom settings:
 ```
-DURATION_MINUTES=5 LOGS_PER_MINUTE=12 LOG_DIRECTORY=./app_logs ENABLE_JOURNALD=true SYSLOG_IDENTIFIER=app-metrics python simple-logger.py
+DURATION_MINUTES=5 LOGS_PER_MINUTE=12 LOG_DIRECTORY=./app_logs LOG_PADDING_SIZE=2048 ENABLE_JOURNALD=true SYSLOG_IDENTIFIER=app-metrics python simple-logger.py
 ```
 
 ## Log Output
@@ -163,17 +182,18 @@ Here's an example of running the logger for 2 minutes with 5 logs per minute:
 $ DURATION_MINUTES=2 LOGS_PER_MINUTE=5 LOG_DIRECTORY=./logs python simple-logger.py
 Starting logger. Will run for 2 minutes, logging 5 times per minute.
 Logs will be written to: ./logs/application_log_20250717_143022.log
+Log padding size: 512 bytes
 Press Ctrl+C to stop.
-[2025-07-17T14:30:22.123456] Log entry #1: Application is running
-[2025-07-17T14:30:34.234567] Log entry #2: Application is running
-[2025-07-17T14:30:46.345678] Log entry #3: Application is running
-[2025-07-17T14:30:58.456789] Log entry #4: Application is running
-[2025-07-17T14:31:10.567890] Log entry #5: Application is running
-[2025-07-17T14:31:22.678901] Log entry #6: Application is running
-[2025-07-17T14:31:34.789012] Log entry #7: Application is running
-[2025-07-17T14:31:46.890123] Log entry #8: Application is running
-[2025-07-17T14:31:58.901234] Log entry #9: Application is running
-[2025-07-17T14:32:10.012345] Log entry #10: Application is running
+[2025-07-17T14:30:22.123456] Log entry #1: Application is running | a1B2c3D4e5F6g7H8i9J0... (random data truncated for readability)
+[2025-07-17T14:30:34.234567] Log entry #2: Application is running | k1L2m3N4o5P6q7R8s9T0... (random data truncated for readability)
+[2025-07-17T14:30:46.345678] Log entry #3: Application is running | u1V2w3X4y5Z6a7B8c9D0... (random data truncated for readability)
+[2025-07-17T14:30:58.456789] Log entry #4: Application is running | e1F2g3H4i5J6k7L8m9N0... (random data truncated for readability)
+[2025-07-17T14:31:10.567890] Log entry #5: Application is running | o1P2q3R4s5T6u7V8w9X0... (random data truncated for readability)
+[2025-07-17T14:31:22.678901] Log entry #6: Application is running | y1Z2a3B4c5D6e7F8g9H0... (random data truncated for readability)
+[2025-07-17T14:31:34.789012] Log entry #7: Application is running | i1J2k3L4m5N6o7P8q9R0... (random data truncated for readability)
+[2025-07-17T14:31:46.890123] Log entry #8: Application is running | s1T2u3V4w5X6y7Z8a9B0... (random data truncated for readability)
+[2025-07-17T14:31:58.901234] Log entry #9: Application is running | c1D2e3F4g5H6i7J8k9L0... (random data truncated for readability)
+[2025-07-17T14:32:10.012345] Log entry #10: Application is running | m1N2o3P4q5R6s7T8u9V0... (random data truncated for readability)
 Logger completed after 2 minutes with 10 log entries.
 ```
 

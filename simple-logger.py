@@ -3,6 +3,8 @@ import datetime
 import sys
 import os
 import pathlib
+import random
+import string
 
 # Try to import systemd journal module for journald logging
 journald_available = False
@@ -22,6 +24,15 @@ try:
         sys.exit(1)
 except ValueError:
     print("Error: DURATION_MINUTES must be a valid integer")
+    sys.exit(1)
+
+try:
+    LOG_PADDING_SIZE = int(os.environ.get('LOG_PADDING_SIZE', 512))
+    if LOG_PADDING_SIZE < 0:
+        print("Error: LOG_PADDING_SIZE must be a non-negative integer")
+        sys.exit(1)
+except ValueError:
+    print("Error: LOG_PADDING_SIZE must be a valid integer")
     sys.exit(1)
 
 try:
@@ -66,6 +77,7 @@ except OSError as e:
 
 print(f"Starting logger. Will run for {DURATION_MINUTES} minutes, logging {LOGS_PER_MINUTE} times per minute.")
 print(f"Logs will be written to: {log_file_path}")
+print(f"Log padding size: {LOG_PADDING_SIZE} bytes")
 if ENABLE_JOURNALD:
     print(f"Journald logging is enabled")
 print(f"Press Ctrl+C to stop.")
@@ -73,6 +85,7 @@ print(f"Press Ctrl+C to stop.")
 # Write the same information to the log file
 log_file.write(f"Starting logger. Will run for {DURATION_MINUTES} minutes, logging {LOGS_PER_MINUTE} times per minute.\n")
 log_file.write(f"Logs will be written to: {log_file_path}\n")
+log_file.write(f"Log padding size: {LOG_PADDING_SIZE} bytes\n")
 log_file.flush()
 
 start_time = time.time()
@@ -83,7 +96,14 @@ try:
     while time.time() < end_time:
         log_count += 1
         timestamp = datetime.datetime.now().isoformat()
-        message = f"[{timestamp}] Log entry #{log_count}: Application is running"
+        base_message = f"[{timestamp}] Log entry #{log_count}: Application is running"
+        
+        # Generate random padding data if LOG_PADDING_SIZE > 0
+        random_data = ""
+        if LOG_PADDING_SIZE > 0:
+            random_data = ''.join(random.choices(string.ascii_letters + string.digits, k=LOG_PADDING_SIZE))
+        
+        message = base_message + (f" | {random_data}" if random_data else "")
         
         # Write to stdout
         print(message)
@@ -97,7 +117,7 @@ try:
         if ENABLE_JOURNALD:
             try:
                 log_data = {
-                    "MESSAGE": f"Log entry #{log_count}: Application is running",
+                    "MESSAGE": message,
                     "PRIORITY": journal.LOG_INFO,
                     "SYSLOG_IDENTIFIER": SYSLOG_IDENTIFIER,
                     "TIMESTAMP": timestamp,
